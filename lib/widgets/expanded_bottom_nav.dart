@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ExpandableBottomNav extends StatefulWidget {
   const ExpandableBottomNav({super.key});
@@ -8,30 +9,46 @@ class ExpandableBottomNav extends StatefulWidget {
 }
 
 class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
-  static const _animationDuration = Duration(milliseconds: 100);
+  static const _animationDuration = Duration(milliseconds: 200);
   static const _collapsedHeight = 125.0;
-  static const _expandedHeight = 225.0;
+  static const _expandedDateHeight = 300.0;
+  static const _expandedScanHeight = 400.0;
+  static const _expandedAddHeight = 300.0;
 
-  bool _expanded = false;
+  bool _expandedDate = false;
+  bool _expandedScan = false;
+  bool _expandedAdd = false;
+
+  int _dateCounter = 0;
+
+  double get _currentHeight {
+    if (_expandedDate) return _expandedDateHeight;
+    if (_expandedScan) return _expandedScanHeight;
+    if (_expandedAdd) return _expandedAddHeight;
+    return _collapsedHeight;
+  }
+
+  Widget _getCurrentContent() {
+    if (_expandedDate) return _buildExpandedDateContent();
+    if (_expandedScan) return _buildExpandedScanContent();
+    if (_expandedAdd) return _buildExpandedAddContent();
+    return _buildCollapsedContent();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: _animationDuration,
-      height: _expanded ? _expandedHeight : _collapsedHeight,
-      color: Colors.black,
+      height: _currentHeight,
+      curve: Curves.easeInOutCubic,
+      color: Colors.grey,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           BottomAppBar(
             color: Colors.black,
-            padding: const EdgeInsets.symmetric(
-              vertical: 16.0,
-              horizontal: 8.0,
-            ),
-            child: _expanded
-                ? _buildExpandedContent()
-                : _buildCollapsedContent(),
+            height: double.infinity,
+            child: _getCurrentContent(),
           ),
           _buildCurve(),
         ],
@@ -39,24 +56,65 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
     );
   }
 
-  Widget _buildExpandedContent() {
+  Widget _buildExpandedDateContent() {
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Align(alignment: Alignment.center, child: _buildToggleButton()),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _dateCounter--;
+                  });
+                },
+                icon: const Icon(
+                  Icons.arrow_left,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              Text(
+                '$_dateCounter',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                ), // Increased font size
+                textAlign: TextAlign.center,
+              ),
+              IconButton(
+                onPressed: () {
+                  setState(() {
+                    _dateCounter++;
+                  });
+                },
+                icon: const Icon(
+                  Icons.arrow_right,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandedScanContent() {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        Align(alignment: Alignment.center, child: _buildToggleButton()),
-        const Flexible(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 32.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                Icon(Icons.arrow_left, color: Colors.white),
-                Icon(Icons.arrow_right, color: Colors.white),
-              ],
-            ),
-          ),
-        ),
-      ],
+      children: [Align(alignment: Alignment.center, child: _buildScanButton())],
+    );
+  }
+
+  Widget _buildExpandedAddContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [Align(alignment: Alignment.center, child: _buildAddButton())],
     );
   }
 
@@ -65,26 +123,91 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
       padding: const EdgeInsets.symmetric(horizontal: 32.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [_buildToggleButton(), _buildAddButton()],
+        children: [_buildToggleButton(), _buildScanButton(), _buildAddButton()],
       ),
     );
+  }
+
+  void _toggleDateExpanded() {
+    setState(() {
+      _expandedDate = !_expandedDate;
+      if (_expandedDate) {
+        _expandedScan = false;
+        _expandedAdd = false;
+        context.go('/home'); // Navigate to the date page
+      }
+    });
+  }
+
+  void _toggleScanExpanded() {
+    setState(() {
+      _expandedScan = !_expandedScan;
+      if (_expandedScan) {
+        _expandedDate = false;
+        _expandedAdd = false;
+        context.go('/scan');
+      } else {
+        context.go('/home');
+      }
+    });
+  }
+
+  void _toggleAddExpanded() {
+    setState(() {
+      _expandedAdd = !_expandedAdd;
+      if (_expandedAdd) {
+        _expandedDate = false;
+        _expandedScan = false;
+        context.go('/add');
+      } else {
+        context.go('/home');
+      }
+    });
   }
 
   Widget _buildToggleButton() {
     return ElevatedButton.icon(
       onPressed: () {
-        setState(() => _expanded = !_expanded);
+        _toggleDateExpanded();
       },
       icon: const Icon(Icons.calendar_today, color: Colors.black),
       label: const Text('Today', style: TextStyle(color: Colors.black)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _expandedDate ? Colors.grey[300] : Colors.white,
+      ),
     );
   }
 
   Widget _buildAddButton() {
     return ElevatedButton.icon(
-      onPressed: () {},
-      icon: const Icon(Icons.add, color: Colors.black),
-      label: const Text('Add', style: TextStyle(color: Colors.black)),
+      onPressed: () {
+        _toggleAddExpanded();
+      },
+      icon: _expandedAdd ? null : Icon(Icons.add, color: Colors.black),
+      label: Text(
+        _expandedAdd ? 'Back' : 'Add',
+        style: TextStyle(color: Colors.black),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _expandedAdd ? Colors.grey[300] : Colors.white,
+      ),
+    );
+  }
+
+  Widget _buildScanButton() {
+    return ElevatedButton(
+      onPressed: () {
+        _toggleScanExpanded();
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _expandedScan ? Colors.grey[300] : Colors.white,
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: CircleBorder(),
+      ),
+      child: _expandedScan
+          ? Icon(Icons.arrow_downward)
+          : Icon(Icons.camera_alt, color: Colors.black),
     );
   }
 
