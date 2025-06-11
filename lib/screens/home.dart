@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kaloria/contorller/date_controller.dart';
+import 'package:kaloria/utils/date_format.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedDate = ref.watch(selectedDateProvider);
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -19,7 +24,7 @@ class HomePage extends StatelessWidget {
                   style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Calories consumed',
+                  'Calories consumed on ${formatDateManual(selectedDate)}',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                 ),
               ],

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kaloria/contorller/date_controller.dart';
+import 'package:kaloria/utils/date_format.dart';
 
-class ExpandableBottomNav extends StatefulWidget {
+class ExpandableBottomNav extends ConsumerStatefulWidget {
   const ExpandableBottomNav({super.key});
 
   @override
-  State<ExpandableBottomNav> createState() => _ExpandableBottomNavState();
+  ConsumerState<ExpandableBottomNav> createState() =>
+      _ExpandableBottomNavState();
 }
 
-class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
+class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
   static const _animationDuration = Duration(milliseconds: 200);
   static const _collapsedHeight = 125.0;
   static const _expandedDateHeight = 300.0;
@@ -19,8 +23,6 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
   bool _expandedScan = false;
   bool _expandedAdd = false;
 
-  int _dateCounter = 0;
-
   double get _currentHeight {
     if (_expandedDate) return _expandedDateHeight;
     if (_expandedScan) return _expandedScanHeight;
@@ -28,11 +30,11 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
     return _collapsedHeight;
   }
 
-  Widget _getCurrentContent() {
-    if (_expandedDate) return _buildExpandedDateContent();
+  Widget _getCurrentContent(WidgetRef ref) {
+    if (_expandedDate) return _buildExpandedDateContent(ref);
     if (_expandedScan) return _buildExpandedScanContent();
     if (_expandedAdd) return _buildExpandedAddContent();
-    return _buildCollapsedContent();
+    return _buildCollapsedContent(ref);
   }
 
   @override
@@ -48,7 +50,7 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
           BottomAppBar(
             color: Colors.black,
             height: double.infinity,
-            child: _getCurrentContent(),
+            child: _getCurrentContent(ref),
           ),
           _buildCurve(),
         ],
@@ -56,7 +58,8 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
     );
   }
 
-  Widget _buildExpandedDateContent() {
+  Widget _buildExpandedDateContent(WidgetRef ref) {
+    final selectedDate = ref.watch(selectedDateProvider);
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.max,
@@ -68,7 +71,7 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
               IconButton(
                 onPressed: () {
                   setState(() {
-                    _dateCounter--;
+                    ref.read(selectedDateProvider.notifier).previousDay();
                   });
                 },
                 icon: const Icon(
@@ -78,7 +81,7 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
                 ),
               ),
               Text(
-                '$_dateCounter',
+                formatDateManual(selectedDate),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -88,7 +91,7 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
               IconButton(
                 onPressed: () {
                   setState(() {
-                    _dateCounter++;
+                    ref.read(selectedDateProvider.notifier).nextDay();
                   });
                 },
                 icon: const Icon(
@@ -118,12 +121,19 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
     );
   }
 
-  Widget _buildCollapsedContent() {
+  Widget _buildCollapsedContent(WidgetRef ref) {
+    final selectedDate = ref.watch(selectedDateProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [_buildToggleButton(), _buildScanButton(), _buildAddButton()],
+        children: [
+          if (DateTime.now().day != selectedDate.day) _buildReturnButton(),
+          _buildToggleButton(),
+          _buildScanButton(),
+          _buildAddButton(),
+        ],
       ),
     );
   }
@@ -208,6 +218,21 @@ class _ExpandableBottomNavState extends State<ExpandableBottomNav> {
       child: _expandedScan
           ? Icon(Icons.arrow_downward)
           : Icon(Icons.camera_alt, color: Colors.black),
+    );
+  }
+
+  Widget _buildReturnButton() {
+    return ElevatedButton(
+      onPressed: () {
+        ref.read(selectedDateProvider.notifier).todayDay();
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _expandedScan ? Colors.grey[300] : Colors.white,
+        padding: EdgeInsets.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: CircleBorder(),
+      ),
+      child: Icon(Icons.arrow_left),
     );
   }
 
