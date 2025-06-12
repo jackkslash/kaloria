@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kaloria/contorller/date_controller.dart';
+import 'package:kaloria/contorller/navbar_controller.dart';
+import 'package:kaloria/models/navbar.dart';
+import 'package:kaloria/utils/curver_drawer.dart';
 import 'package:kaloria/utils/date_format.dart';
 
 class ExpandableBottomNav extends ConsumerStatefulWidget {
@@ -14,34 +17,27 @@ class ExpandableBottomNav extends ConsumerStatefulWidget {
 
 class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
   static const _animationDuration = Duration(milliseconds: 200);
-  static const _collapsedHeight = 125.0;
-  static const _expandedDateHeight = 300.0;
-  static const _expandedScanHeight = 400.0;
-  static const _expandedAddHeight = 300.0;
 
-  bool _expandedDate = false;
-  bool _expandedScan = false;
-  bool _expandedAdd = false;
-
-  double get _currentHeight {
-    if (_expandedDate) return _expandedDateHeight;
-    if (_expandedScan) return _expandedScanHeight;
-    if (_expandedAdd) return _expandedAddHeight;
-    return _collapsedHeight;
-  }
-
-  Widget _getCurrentContent(WidgetRef ref) {
-    if (_expandedDate) return _buildExpandedDateContent(ref);
-    if (_expandedScan) return _buildExpandedScanContent();
-    if (_expandedAdd) return _buildExpandedAddContent();
-    return _buildCollapsedContent(ref);
+  Widget _getCurrentContent(NavBarState state, WidgetRef ref) {
+    switch (state.expanded) {
+      case ExpandedSection.date:
+        return _buildExpandedDateContent(state, ref);
+      case ExpandedSection.scan:
+        return _buildExpandedScanContent(state);
+      case ExpandedSection.add:
+        return _buildExpandedAddContent(state);
+      default:
+        return _buildCollapsedContent(state, ref);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(navBarProvider);
+
     return AnimatedContainer(
       duration: _animationDuration,
-      height: _currentHeight,
+      height: state.currentHeight,
       curve: Curves.easeInOutCubic,
       color: Colors.grey,
       child: Stack(
@@ -50,7 +46,7 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
           BottomAppBar(
             color: Colors.black,
             height: double.infinity,
-            child: _getCurrentContent(ref),
+            child: _getCurrentContent(state, ref),
           ),
           _buildCurve(),
         ],
@@ -58,181 +54,211 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
     );
   }
 
-  Widget _buildExpandedDateContent(WidgetRef ref) {
+  Widget _buildExpandedDateContent(NavBarState state, WidgetRef ref) {
     final selectedDate = ref.watch(selectedDateProvider);
+
+    final formattedDate = formatDateManual(selectedDate);
+    final dateParts = formattedDate.split(' ');
+
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
-          Align(alignment: Alignment.center, child: _buildToggleButton()),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              IconButton(
-                onPressed: () {
-                  setState(() {
+          Align(alignment: Alignment.center, child: _buildToggleButton(state)),
+          Padding(
+            padding: const EdgeInsets.only(top: 32.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                IconButton(
+                  onPressed: () {
                     ref.read(selectedDateProvider.notifier).previousDay();
-                  });
-                },
-                icon: const Icon(
-                  Icons.arrow_left,
-                  color: Colors.white,
-                  size: 32,
+                  },
+                  icon: const Icon(
+                    Icons.arrow_left,
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
-              ),
-              Text(
-                formatDateManual(selectedDate),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                ), // Increased font size
-                textAlign: TextAlign.center,
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
+                GestureDetector(
+                  onHorizontalDragEnd: (details) {
+                    if (details.primaryVelocity! > 0) {
+                      // Swipe right
+                      ref.read(selectedDateProvider.notifier).previousDay();
+                    } else if (details.primaryVelocity! < 0) {
+                      // Swipe left
+                      ref.read(selectedDateProvider.notifier).nextDay();
+                    }
+                  },
+                  child: SizedBox(
+                    width: 200, // Fixed width
+                    child: Column(
+                      children: [
+                        Text(
+                          dateParts.isNotEmpty ? dateParts[0] : '',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          dateParts.length > 1 ? dateParts[1] : '',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 48,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
                     ref.read(selectedDateProvider.notifier).nextDay();
-                  });
-                },
-                icon: const Icon(
-                  Icons.arrow_right,
-                  color: Colors.white,
-                  size: 32,
+                  },
+                  icon: const Icon(
+                    Icons.arrow_right,
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildExpandedScanContent() {
+  Widget _buildExpandedScanContent(NavBarState state) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [Align(alignment: Alignment.center, child: _buildScanButton())],
+      children: [
+        Align(alignment: Alignment.center, child: _buildScanButton(state)),
+      ],
     );
   }
 
-  Widget _buildExpandedAddContent() {
+  Widget _buildExpandedAddContent(NavBarState state) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      children: [Align(alignment: Alignment.center, child: _buildAddButton())],
+      children: [
+        Align(alignment: Alignment.center, child: _buildAddButton(state)),
+      ],
     );
   }
 
-  Widget _buildCollapsedContent(WidgetRef ref) {
+  Widget _buildCollapsedContent(NavBarState state, WidgetRef ref) {
     final selectedDate = ref.watch(selectedDateProvider);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (DateTime.now().day != selectedDate.day) _buildReturnButton(),
-          _buildToggleButton(),
-          _buildScanButton(),
-          _buildAddButton(),
+          if (DateTime.now().day != selectedDate.day) _buildReturnButton(state),
+          _buildToggleButton(state),
+          _buildScanButton(state),
+          _buildAddButton(state),
         ],
       ),
     );
   }
 
-  void _toggleDateExpanded() {
-    setState(() {
-      _expandedDate = !_expandedDate;
-      if (_expandedDate) {
-        _expandedScan = false;
-        _expandedAdd = false;
-        context.go('/home'); // Navigate to the date page
-      }
-    });
+  void _toggleDateExpanded(NavBarState state) {
+    final notifier = ref.read(navBarProvider.notifier);
+    if (state.expanded != ExpandedSection.date) {
+      notifier.expandDate();
+      context.go('/home');
+    } else {
+      notifier.collapseAll();
+    }
   }
 
-  void _toggleScanExpanded() {
-    setState(() {
-      _expandedScan = !_expandedScan;
-      if (_expandedScan) {
-        _expandedDate = false;
-        _expandedAdd = false;
-        context.go('/scan');
-      } else {
-        context.go('/home');
-      }
-    });
+  void _toggleScanExpanded(NavBarState state) {
+    final notifier = ref.read(navBarProvider.notifier);
+    if (state.expanded != ExpandedSection.scan) {
+      notifier.expandScan();
+      context.go('/scan');
+    } else {
+      notifier.collapseAll();
+      context.go('/home');
+    }
   }
 
-  void _toggleAddExpanded() {
-    setState(() {
-      _expandedAdd = !_expandedAdd;
-      if (_expandedAdd) {
-        _expandedDate = false;
-        _expandedScan = false;
-        context.go('/add');
-      } else {
-        context.go('/home');
-      }
-    });
+  void _toggleAddExpanded(NavBarState state) {
+    final notifier = ref.read(navBarProvider.notifier);
+    if (state.expanded != ExpandedSection.add) {
+      notifier.expandAdd();
+      context.go('/add');
+    } else {
+      notifier.collapseAll();
+      context.go('/home');
+    }
   }
 
-  Widget _buildToggleButton() {
+  Widget _buildToggleButton(NavBarState state) {
     return ElevatedButton.icon(
-      onPressed: () {
-        _toggleDateExpanded();
-      },
+      onPressed: () => _toggleDateExpanded(state),
       icon: const Icon(Icons.calendar_today, color: Colors.black),
       label: const Text('Today', style: TextStyle(color: Colors.black)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: _expandedDate ? Colors.grey[300] : Colors.white,
+        backgroundColor: state.expanded == ExpandedSection.date
+            ? Colors.grey[300]
+            : Colors.white,
       ),
     );
   }
 
-  Widget _buildAddButton() {
+  Widget _buildAddButton(NavBarState state) {
     return ElevatedButton.icon(
-      onPressed: () {
-        _toggleAddExpanded();
-      },
-      icon: _expandedAdd ? null : Icon(Icons.add, color: Colors.black),
+      onPressed: () => _toggleAddExpanded(state),
+      icon: state.expanded == ExpandedSection.add
+          ? null
+          : const Icon(Icons.add, color: Colors.black),
       label: Text(
-        _expandedAdd ? 'Back' : 'Add',
-        style: TextStyle(color: Colors.black),
+        state.expanded == ExpandedSection.add ? 'Back' : 'Add',
+        style: const TextStyle(color: Colors.black),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: _expandedAdd ? Colors.grey[300] : Colors.white,
+        backgroundColor: state.expanded == ExpandedSection.add
+            ? Colors.grey[300]
+            : Colors.white,
       ),
     );
   }
 
-  Widget _buildScanButton() {
+  Widget _buildScanButton(NavBarState state) {
     return ElevatedButton(
-      onPressed: () {
-        _toggleScanExpanded();
-      },
+      onPressed: () => _toggleScanExpanded(state),
       style: ElevatedButton.styleFrom(
-        backgroundColor: _expandedScan ? Colors.grey[300] : Colors.white,
+        backgroundColor: state.expanded == ExpandedSection.scan
+            ? Colors.grey[300]
+            : Colors.white,
         padding: EdgeInsets.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: CircleBorder(),
+        shape: const CircleBorder(),
       ),
-      child: _expandedScan
-          ? Icon(Icons.arrow_downward)
-          : Icon(Icons.camera_alt, color: Colors.black),
+      child: state.expanded == ExpandedSection.scan
+          ? const Icon(Icons.arrow_downward)
+          : const Icon(Icons.camera_alt, color: Colors.black),
     );
   }
 
-  Widget _buildReturnButton() {
+  Widget _buildReturnButton(NavBarState state) {
     return ElevatedButton(
       onPressed: () {
         ref.read(selectedDateProvider.notifier).todayDay();
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: _expandedScan ? Colors.grey[300] : Colors.white,
+        backgroundColor: Colors.white,
         padding: EdgeInsets.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: CircleBorder(),
+        shape: const CircleBorder(),
       ),
-      child: Icon(Icons.arrow_left),
+      child: const Icon(Icons.arrow_left),
     );
   }
 
@@ -256,25 +282,4 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
       ),
     );
   }
-}
-
-class CurvedCornerPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.fill;
-
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(0, size.height)
-      ..lineTo(size.width, size.height)
-      ..quadraticBezierTo(0, size.height, 0, 0)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
