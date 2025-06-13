@@ -1,4 +1,4 @@
-String formatDateManual(DateTime date) {
+String formatDateManual(DateTime date, {bool useShortForm = false}) {
   const monthNames = [
     'January',
     'February',
@@ -13,9 +13,26 @@ String formatDateManual(DateTime date) {
     'November',
     'December',
   ];
+
+  const monthNamesShort = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
   final day = date.day;
   final suffix = _getDaySuffix(day);
-  return '${monthNames[date.month - 1]} $day$suffix';
+  final monthList = useShortForm ? monthNamesShort : monthNames;
+  return '${monthList[date.month - 1]} $day$suffix';
 }
 
 String _getDaySuffix(int day) {

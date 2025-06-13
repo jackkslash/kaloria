@@ -64,7 +64,7 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
       child: Column(
         mainAxisSize: MainAxisSize.max,
         children: [
-          Align(alignment: Alignment.center, child: _buildToggleButton(state)),
+          Align(alignment: Alignment.center, child: _buildDateButton(state)),
           Padding(
             padding: const EdgeInsets.only(top: 32.0),
             child: Row(
@@ -154,12 +154,12 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
   Widget _buildCollapsedContent(NavBarState state, WidgetRef ref) {
     final selectedDate = ref.watch(selectedDateProvider);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (DateTime.now().day != selectedDate.day) _buildReturnButton(state),
-          _buildToggleButton(state),
+          _buildDateButton(state),
           _buildScanButton(state),
           _buildAddButton(state),
         ],
@@ -199,11 +199,38 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
     }
   }
 
-  Widget _buildToggleButton(NavBarState state) {
+  Widget _buildDateButton(NavBarState state) {
+    final selectedDate = ref.watch(selectedDateProvider);
+    final now = DateTime.now();
+
+    // Remove time part to ensure accurate date-only comparison
+    DateTime today = DateTime(now.year, now.month, now.day);
+    DateTime selected = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    );
+
+    final int dayDifference = selected.difference(today).inDays;
+    String dateText;
+    switch (dayDifference) {
+      case 0:
+        dateText = 'Today';
+        break;
+      case 1:
+        dateText = 'Tomorrow';
+        break;
+      case -1:
+        dateText = 'Yesterday';
+        break;
+      default:
+        dateText = formatDateManual(selectedDate, useShortForm: true);
+    }
+
     return ElevatedButton.icon(
       onPressed: () => _toggleDateExpanded(state),
       icon: const Icon(Icons.calendar_today, color: Colors.black),
-      label: const Text('Today', style: TextStyle(color: Colors.black)),
+      label: Text(dateText, style: const TextStyle(color: Colors.black)),
       style: ElevatedButton.styleFrom(
         backgroundColor: state.expanded == ExpandedSection.date
             ? Colors.grey[300]
@@ -213,20 +240,15 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
   }
 
   Widget _buildAddButton(NavBarState state) {
-    return ElevatedButton.icon(
+    return ElevatedButton(
       onPressed: () => _toggleAddExpanded(state),
-      icon: state.expanded == ExpandedSection.add
-          ? null
-          : const Icon(Icons.add, color: Colors.black),
-      label: Text(
-        state.expanded == ExpandedSection.add ? 'Back' : 'Add',
-        style: const TextStyle(color: Colors.black),
-      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: state.expanded == ExpandedSection.add
             ? Colors.grey[300]
             : Colors.white,
+        padding: EdgeInsets.symmetric(horizontal: 32.0),
       ),
+      child: const Icon(Icons.add, color: Colors.black),
     );
   }
 
