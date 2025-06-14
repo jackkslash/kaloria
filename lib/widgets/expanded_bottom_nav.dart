@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:kaloria/contorller/date_controller.dart';
-import 'package:kaloria/contorller/navbar_controller.dart';
+import 'package:kaloria/controller/date_controller.dart';
+import 'package:kaloria/controller/navbar_controller.dart';
 import 'package:kaloria/models/navbar.dart';
 import 'package:kaloria/utils/curver_drawer.dart';
 import 'package:kaloria/utils/date_format.dart';
