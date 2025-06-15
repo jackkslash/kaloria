@@ -62,7 +62,7 @@ class HomePage extends ConsumerWidget {
       child: Scaffold(
         body: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.only(top: 128, bottom: 8),
+            padding: const EdgeInsets.only(top: 32, bottom: 8),
             child: Center(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,

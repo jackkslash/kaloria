@@ -6,6 +6,8 @@ import 'package:kaloria/router.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light); // or dark
+
   runApp(ProviderScope(child: MyApp()));
 }
 
