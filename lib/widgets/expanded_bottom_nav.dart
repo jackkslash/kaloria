@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:kaloria/controller/date_controller.dart';
 import 'package:kaloria/controller/navbar_controller.dart';
 import 'package:kaloria/models/navbar.dart';
-import 'package:kaloria/utils/curver_drawer.dart';
+import 'package:kaloria/utils/curve_drawer.dart';
 import 'package:kaloria/utils/date_format.dart';
 
 class ExpandableBottomNav extends ConsumerStatefulWidget {
@@ -291,13 +291,20 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
       right: 0,
       child: Row(
         children: [
-          CustomPaint(size: const Size(75, 75), painter: CurvedCornerPainter()),
-          const Spacer(),
           Transform.flip(
             flipX: true,
+            flipY: true,
             child: CustomPaint(
               size: const Size(75, 75),
-              painter: CurvedCornerPainter(),
+              painter: CurvedCornerPainter(radius: 40),
+            ),
+          ),
+          const Spacer(),
+          Transform.flip(
+            flipY: true,
+            child: CustomPaint(
+              size: const Size(75, 75),
+              painter: CurvedCornerPainter(radius: 40),
             ),
           ),
         ],

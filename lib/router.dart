@@ -4,7 +4,7 @@ import 'package:kaloria/screens/add.dart';
 import 'package:kaloria/screens/scan.dart';
 import 'package:kaloria/widgets/expanded_bottom_nav.dart';
 import 'package:kaloria/screens/home.dart';
-import 'package:kaloria/utils/curver_drawer.dart'; // Import the CurvedCornerPainter
+import 'package:kaloria/utils/curve_drawer.dart'; // Import the CurvedCornerPainter
 
 final router = GoRouter(
   initialLocation: '/home',
@@ -30,29 +30,17 @@ final router = GoRouter(
                   right: 0,
                   child: Row(
                     children: [
-                      Transform(
-                        alignment: Alignment.center,
-                        transform: Matrix4.rotationX(
-                          3.14159,
-                        ), // 180 degrees in radians
+                      Transform.flip(
+                        flipX: true,
                         child: CustomPaint(
                           size: const Size(75, 75),
-                          painter: CurvedCornerPainter(),
+                          painter: CurvedCornerPainter(radius: 40),
                         ),
                       ),
                       const Spacer(),
-                      Transform.flip(
-                        flipX: true,
-                        child: Transform(
-                          alignment: Alignment.center,
-                          transform: Matrix4.rotationX(
-                            3.14159,
-                          ), // 180 degrees in radians
-                          child: CustomPaint(
-                            size: const Size(75, 75),
-                            painter: CurvedCornerPainter(),
-                          ),
-                        ),
+                      CustomPaint(
+                        size: const Size(75, 75),
+                        painter: CurvedCornerPainter(radius: 40),
                       ),
                     ],
                   ),

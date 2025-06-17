@@ -60,6 +60,7 @@ class HomePage extends ConsumerWidget {
         ref.read(navBarProvider.notifier).collapseAll();
       },
       child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 225, 225, 225),
         body: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.only(top: 32, bottom: 8),
@@ -78,7 +79,12 @@ class HomePage extends ConsumerWidget {
                         targetValue: 1,
                         size: 60,
                         fillColor: const Color.fromARGB(255, 99, 99, 99),
-                        backgroundColor: const Color(0xFFE0E0E0),
+                        backgroundColor: const Color.fromARGB(
+                          255,
+                          255,
+                          255,
+                          255,
+                        ),
                         strokeWidth: 20.0,
                       ),
                       Column(
@@ -110,7 +116,7 @@ class HomePage extends ConsumerWidget {
                           child: Container(
                             padding: EdgeInsets.all(32),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE0E0E0),
+                              color: const Color.fromARGB(255, 255, 255, 255),
                               borderRadius: BorderRadius.circular(60),
                             ),
                             child: Padding(
