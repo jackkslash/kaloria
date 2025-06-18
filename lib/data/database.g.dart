@@ -22,28 +22,6 @@ class $DatabaseDiaryEntryTable extends DatabaseDiaryEntry
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
-  static const VerificationMeta _startTimeMeta = const VerificationMeta(
-    'startTime',
-  );
-  @override
-  late final GeneratedColumn<DateTime> startTime = GeneratedColumn<DateTime>(
-    'start_time',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _endTimeMeta = const VerificationMeta(
-    'endTime',
-  );
-  @override
-  late final GeneratedColumn<DateTime> endTime = GeneratedColumn<DateTime>(
-    'end_time',
-    aliasedName,
-    true,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -57,7 +35,7 @@ class $DatabaseDiaryEntryTable extends DatabaseDiaryEntry
     clientDefault: () => DateTime.now(),
   );
   @override
-  List<GeneratedColumn> get $columns => [id, startTime, endTime, createdAt];
+  List<GeneratedColumn> get $columns => [id, createdAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -72,18 +50,6 @@ class $DatabaseDiaryEntryTable extends DatabaseDiaryEntry
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('start_time')) {
-      context.handle(
-        _startTimeMeta,
-        startTime.isAcceptableOrUnknown(data['start_time']!, _startTimeMeta),
-      );
-    }
-    if (data.containsKey('end_time')) {
-      context.handle(
-        _endTimeMeta,
-        endTime.isAcceptableOrUnknown(data['end_time']!, _endTimeMeta),
-      );
     }
     if (data.containsKey('created_at')) {
       context.handle(
@@ -104,14 +70,6 @@ class $DatabaseDiaryEntryTable extends DatabaseDiaryEntry
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
-      startTime: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}start_time'],
-      ),
-      endTime: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}end_time'],
-      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -128,25 +86,12 @@ class $DatabaseDiaryEntryTable extends DatabaseDiaryEntry
 class DatabaseDiaryEntryData extends DataClass
     implements Insertable<DatabaseDiaryEntryData> {
   final int id;
-  final DateTime? startTime;
-  final DateTime? endTime;
   final DateTime createdAt;
-  const DatabaseDiaryEntryData({
-    required this.id,
-    this.startTime,
-    this.endTime,
-    required this.createdAt,
-  });
+  const DatabaseDiaryEntryData({required this.id, required this.createdAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    if (!nullToAbsent || startTime != null) {
-      map['start_time'] = Variable<DateTime>(startTime);
-    }
-    if (!nullToAbsent || endTime != null) {
-      map['end_time'] = Variable<DateTime>(endTime);
-    }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
   }
@@ -154,12 +99,6 @@ class DatabaseDiaryEntryData extends DataClass
   DatabaseDiaryEntryCompanion toCompanion(bool nullToAbsent) {
     return DatabaseDiaryEntryCompanion(
       id: Value(id),
-      startTime: startTime == null && nullToAbsent
-          ? const Value.absent()
-          : Value(startTime),
-      endTime: endTime == null && nullToAbsent
-          ? const Value.absent()
-          : Value(endTime),
       createdAt: Value(createdAt),
     );
   }
@@ -171,8 +110,6 @@ class DatabaseDiaryEntryData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return DatabaseDiaryEntryData(
       id: serializer.fromJson<int>(json['id']),
-      startTime: serializer.fromJson<DateTime?>(json['startTime']),
-      endTime: serializer.fromJson<DateTime?>(json['endTime']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -181,28 +118,18 @@ class DatabaseDiaryEntryData extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'startTime': serializer.toJson<DateTime?>(startTime),
-      'endTime': serializer.toJson<DateTime?>(endTime),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
 
-  DatabaseDiaryEntryData copyWith({
-    int? id,
-    Value<DateTime?> startTime = const Value.absent(),
-    Value<DateTime?> endTime = const Value.absent(),
-    DateTime? createdAt,
-  }) => DatabaseDiaryEntryData(
-    id: id ?? this.id,
-    startTime: startTime.present ? startTime.value : this.startTime,
-    endTime: endTime.present ? endTime.value : this.endTime,
-    createdAt: createdAt ?? this.createdAt,
-  );
+  DatabaseDiaryEntryData copyWith({int? id, DateTime? createdAt}) =>
+      DatabaseDiaryEntryData(
+        id: id ?? this.id,
+        createdAt: createdAt ?? this.createdAt,
+      );
   DatabaseDiaryEntryData copyWithCompanion(DatabaseDiaryEntryCompanion data) {
     return DatabaseDiaryEntryData(
       id: data.id.present ? data.id.value : this.id,
-      startTime: data.startTime.present ? data.startTime.value : this.startTime,
-      endTime: data.endTime.present ? data.endTime.value : this.endTime,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -211,67 +138,49 @@ class DatabaseDiaryEntryData extends DataClass
   String toString() {
     return (StringBuffer('DatabaseDiaryEntryData(')
           ..write('id: $id, ')
-          ..write('startTime: $startTime, ')
-          ..write('endTime: $endTime, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, startTime, endTime, createdAt);
+  int get hashCode => Object.hash(id, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is DatabaseDiaryEntryData &&
           other.id == this.id &&
-          other.startTime == this.startTime &&
-          other.endTime == this.endTime &&
           other.createdAt == this.createdAt);
 }
 
 class DatabaseDiaryEntryCompanion
     extends UpdateCompanion<DatabaseDiaryEntryData> {
   final Value<int> id;
-  final Value<DateTime?> startTime;
-  final Value<DateTime?> endTime;
   final Value<DateTime> createdAt;
   const DatabaseDiaryEntryCompanion({
     this.id = const Value.absent(),
-    this.startTime = const Value.absent(),
-    this.endTime = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   DatabaseDiaryEntryCompanion.insert({
     this.id = const Value.absent(),
-    this.startTime = const Value.absent(),
-    this.endTime = const Value.absent(),
     this.createdAt = const Value.absent(),
   });
   static Insertable<DatabaseDiaryEntryData> custom({
     Expression<int>? id,
-    Expression<DateTime>? startTime,
-    Expression<DateTime>? endTime,
     Expression<DateTime>? createdAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (startTime != null) 'start_time': startTime,
-      if (endTime != null) 'end_time': endTime,
       if (createdAt != null) 'created_at': createdAt,
     });
   }
 
   DatabaseDiaryEntryCompanion copyWith({
     Value<int>? id,
-    Value<DateTime?>? startTime,
-    Value<DateTime?>? endTime,
     Value<DateTime>? createdAt,
   }) {
     return DatabaseDiaryEntryCompanion(
       id: id ?? this.id,
-      startTime: startTime ?? this.startTime,
-      endTime: endTime ?? this.endTime,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -281,12 +190,6 @@ class DatabaseDiaryEntryCompanion
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
-    }
-    if (startTime.present) {
-      map['start_time'] = Variable<DateTime>(startTime.value);
-    }
-    if (endTime.present) {
-      map['end_time'] = Variable<DateTime>(endTime.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -298,8 +201,6 @@ class DatabaseDiaryEntryCompanion
   String toString() {
     return (StringBuffer('DatabaseDiaryEntryCompanion(')
           ..write('id: $id, ')
-          ..write('startTime: $startTime, ')
-          ..write('endTime: $endTime, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
@@ -321,15 +222,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $$DatabaseDiaryEntryTableCreateCompanionBuilder =
     DatabaseDiaryEntryCompanion Function({
       Value<int> id,
-      Value<DateTime?> startTime,
-      Value<DateTime?> endTime,
       Value<DateTime> createdAt,
     });
 typedef $$DatabaseDiaryEntryTableUpdateCompanionBuilder =
     DatabaseDiaryEntryCompanion Function({
       Value<int> id,
-      Value<DateTime?> startTime,
-      Value<DateTime?> endTime,
       Value<DateTime> createdAt,
     });
 
@@ -344,16 +241,6 @@ class $$DatabaseDiaryEntryTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get startTime => $composableBuilder(
-    column: $table.startTime,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get endTime => $composableBuilder(
-    column: $table.endTime,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -377,16 +264,6 @@ class $$DatabaseDiaryEntryTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<DateTime> get startTime => $composableBuilder(
-    column: $table.startTime,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get endTime => $composableBuilder(
-    column: $table.endTime,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -404,12 +281,6 @@ class $$DatabaseDiaryEntryTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get startTime =>
-      $composableBuilder(column: $table.startTime, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get endTime =>
-      $composableBuilder(column: $table.endTime, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -456,25 +327,14 @@ class $$DatabaseDiaryEntryTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<DateTime?> startTime = const Value.absent(),
-                Value<DateTime?> endTime = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-              }) => DatabaseDiaryEntryCompanion(
-                id: id,
-                startTime: startTime,
-                endTime: endTime,
-                createdAt: createdAt,
-              ),
+              }) => DatabaseDiaryEntryCompanion(id: id, createdAt: createdAt),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
-                Value<DateTime?> startTime = const Value.absent(),
-                Value<DateTime?> endTime = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
               }) => DatabaseDiaryEntryCompanion.insert(
                 id: id,
-                startTime: startTime,
-                endTime: endTime,
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0

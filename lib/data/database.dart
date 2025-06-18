@@ -6,8 +6,6 @@ part 'database.g.dart';
 
 class DatabaseDiaryEntry extends Table {
   IntColumn get id => integer().autoIncrement()();
-  DateTimeColumn get startTime => dateTime().nullable()();
-  DateTimeColumn get endTime => dateTime().nullable()();
   DateTimeColumn get createdAt =>
       dateTime().clientDefault(() => DateTime.now())();
 }
