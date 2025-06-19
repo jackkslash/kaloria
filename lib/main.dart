@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kaloria/controller/db_controller.dart';
+import 'package:kaloria/controller/diary_controller.dart';
+import 'package:kaloria/models/diary.dart';
 import 'package:kaloria/router.dart';
 
 void main() {
@@ -28,6 +30,9 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     Future.microtask(() async {
       ref.read(databaseNotifierProvider.notifier).initDatabase();
+      ref
+          .read(diaryEntriesNotifierProvider.notifier)
+          .addEntry(DiaryEntry(id: 0, createdAt: DateTime.now()));
       setState(() {
         _isInitialized = true;
       });

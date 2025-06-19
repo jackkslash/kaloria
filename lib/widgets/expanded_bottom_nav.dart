@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kaloria/controller/date_controller.dart';
+import 'package:kaloria/controller/diary_controller.dart';
 import 'package:kaloria/controller/navbar_controller.dart';
+import 'package:kaloria/models/diary.dart';
 import 'package:kaloria/models/navbar.dart';
 import 'package:kaloria/utils/curve_drawer.dart';
 import 'package:kaloria/utils/date_format.dart';
@@ -71,9 +73,7 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 IconButton(
-                  onPressed: () {
-                    ref.read(selectedDateProvider.notifier).previousDay();
-                  },
+                  onPressed: () => _changeDayAndAddEntry(next: false),
                   icon: const Icon(
                     Icons.arrow_left,
                     color: Colors.white,
@@ -82,16 +82,15 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
                 ),
                 GestureDetector(
                   onHorizontalDragEnd: (details) {
-                    if (details.primaryVelocity! > 0) {
-                      // Swipe right
-                      ref.read(selectedDateProvider.notifier).previousDay();
-                    } else if (details.primaryVelocity! < 0) {
-                      // Swipe left
-                      ref.read(selectedDateProvider.notifier).nextDay();
+                    final velocity = details.primaryVelocity ?? 0;
+                    if (velocity > 0) {
+                      _changeDayAndAddEntry(next: false);
+                    } else if (velocity < 0) {
+                      _changeDayAndAddEntry(next: true);
                     }
                   },
                   child: SizedBox(
-                    width: 200, // Fixed width
+                    width: 200,
                     child: Column(
                       children: [
                         Text(
@@ -102,7 +101,7 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: 18),
+                        const SizedBox(height: 18),
                         Text(
                           dateParts.length > 1 ? dateParts[1] : '',
                           style: const TextStyle(
@@ -116,9 +115,7 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {
-                    ref.read(selectedDateProvider.notifier).nextDay();
-                  },
+                  onPressed: () => _changeDayAndAddEntry(next: true),
                   icon: const Icon(
                     Icons.arrow_right,
                     color: Colors.white,
@@ -203,7 +200,6 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
     final selectedDate = ref.watch(selectedDateProvider);
     final now = DateTime.now();
 
-    // Remove time part to ensure accurate date-only comparison
     DateTime today = DateTime(now.year, now.month, now.day);
     DateTime selected = DateTime(
       selectedDate.year,
@@ -246,7 +242,7 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
         backgroundColor: state.expanded == ExpandedSection.add
             ? Colors.grey[300]
             : Colors.white,
-        padding: EdgeInsets.symmetric(horizontal: 32.0),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
       ),
       child: const Icon(Icons.add, color: Colors.black),
     );
@@ -310,5 +306,19 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
         ],
       ),
     );
+  }
+
+  void _changeDayAndAddEntry({required bool next}) {
+    final notifier = ref.read(selectedDateProvider.notifier);
+    if (next) {
+      notifier.nextDay();
+    } else {
+      notifier.previousDay();
+    }
+
+    final updatedDate = ref.read(selectedDateProvider);
+    ref
+        .read(diaryEntriesNotifierProvider.notifier)
+        .addEntry(DiaryEntry(id: 0, createdAt: updatedDate));
   }
 }
