@@ -10,7 +10,16 @@ class DatabaseDiaryEntry extends Table {
       dateTime().clientDefault(() => DateTime.now())();
 }
 
-@DriftDatabase(tables: [DatabaseDiaryEntry])
+class DatabaseItemEntry extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get diaryEntryId => integer().references(DatabaseDiaryEntry, #id)();
+  TextColumn get name => text()();
+  RealColumn get calories => real()();
+  DateTimeColumn get createdAt =>
+      dateTime().clientDefault(() => DateTime.now())();
+}
+
+@DriftDatabase(tables: [DatabaseDiaryEntry, DatabaseItemEntry])
 class AppDatabase extends _$AppDatabase {
   // After generating code, this class needs to define a `schemaVersion` getter
   // and a constructor telling drift where the database should be stored.
