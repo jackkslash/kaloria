@@ -4,47 +4,8 @@ import 'package:kaloria/controller/date_controller.dart';
 import 'package:kaloria/controller/navbar_controller.dart';
 import 'package:kaloria/screens/widgets/progress_indicator.dart';
 import 'package:kaloria/utils/date_format.dart';
-
-final meals = [
-  {
-    'title': 'Breakfast',
-    'items': [
-      {'name': 'Oatmeal', 'cal': 150},
-      {'name': 'Banana', 'cal': 90},
-      {'name': 'Coffee', 'cal': 5},
-    ],
-  },
-  {
-    'title': 'Lunch',
-    'items': [
-      {'name': 'Chicken Wrap', 'cal': 350},
-      {'name': 'Apple', 'cal': 95},
-      {'name': 'Water', 'cal': 0},
-    ],
-  },
-  {
-    'title': 'Dinner',
-    'items': [
-      {'name': 'Salmon', 'cal': 300},
-      {'name': 'Quinoa', 'cal': 180},
-      {'name': 'Mixed Vegetables', 'cal': 120},
-    ],
-  },
-  {
-    'title': 'Snacks',
-    'items': [
-      {'name': 'Granola Bar', 'cal': 200},
-      {'name': 'Almonds', 'cal': 160},
-    ],
-  },
-  {
-    'title': 'Drinks',
-    'items': [
-      {'name': 'Orange Juice', 'cal': 110},
-      {'name': 'Soda', 'cal': 150},
-    ],
-  },
-];
+import 'package:kaloria/models/item.dart';
+import 'package:kaloria/controller/diary_controller.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -52,10 +13,10 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedDate = ref.watch(selectedDateProvider);
+    final diaryNotifier = ref.read(diaryEntriesNotifierProvider.notifier);
 
     return GestureDetector(
-      behavior:
-          HitTestBehavior.opaque, // ensures taps register even on empty areas
+      behavior: HitTestBehavior.opaque,
       onTap: () {
         ref.read(navBarProvider.notifier).collapseAll();
       },
@@ -107,8 +68,18 @@ class HomePage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  Column(
-                    children: meals.map((meal) {
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: diaryNotifier.getDiaryEntryWithItemsForDate(
+                      selectedDate,
+                    ),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      final data = snapshot.data;
+                      final items = data != null
+                          ? data['items'] as List<ItemEntry>
+                          : [];
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: FractionallySizedBox(
@@ -124,65 +95,47 @@ class HomePage extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Title
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        meal['title'] as String,
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        child: Icon(
-                                          Icons.more_vert,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    'Items for this date',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
+                                    ),
                                   ),
                                   SizedBox(height: 12),
-
-                                  // Items
-                                  ...List<Widget>.from(
-                                    (meal['items'] as List).map((item) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 8.0,
-                                          top: 8.0,
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              item['name'],
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                              ),
+                                  ...items.map((item) {
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            item.name,
+                                            style: TextStyle(
+                                              color: Colors.black,
                                             ),
-                                            Text(
-                                              '${item['cal']} cal',
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                              ),
+                                          ),
+                                          Text(
+                                            '${item.calories.toStringAsFixed(0)} cal',
+                                            style: TextStyle(
+                                              color: Colors.black,
                                             ),
-                                          ],
-                                        ),
-                                      );
-                                    }),
-                                  ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
                                 ],
                               ),
                             ),
                           ),
                         ),
                       );
-                    }).toList(),
+                    },
                   ),
                 ],
               ),

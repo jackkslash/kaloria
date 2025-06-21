@@ -7,7 +7,7 @@ part of 'diary_controller.dart';
 // **************************************************************************
 
 String _$diaryEntriesNotifierHash() =>
-    r'22f9a8bdfd1a8c0b4f2c5b9d3fe7c4369359248a';
+    r'2f7c2a2d656aeefc180a86b8adc58d8cf20e0cb5';
 
 /// See also [DiaryEntriesNotifier].
 @ProviderFor(DiaryEntriesNotifier)
