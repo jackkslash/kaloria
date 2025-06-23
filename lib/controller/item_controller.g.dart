@@ -7,7 +7,7 @@ part of 'item_controller.dart';
 // **************************************************************************
 
 String _$itemEntriesNotifierHash() =>
-    r'8e0139eab63d80126913fcf945d1cf23109d1e22';
+    r'0d51c39f2d0d827ef586e3f1d817b2c1af1941e4';
 
 /// See also [ItemEntriesNotifier].
 @ProviderFor(ItemEntriesNotifier)

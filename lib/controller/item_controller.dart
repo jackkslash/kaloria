@@ -9,17 +9,6 @@ class ItemEntriesNotifier extends _$ItemEntriesNotifier {
   @override
   List<ItemEntry> build() => [];
 
-  /// Loads all items for a given diary entry id
-  Future<void> loadItemsForDiary(int diaryEntryId) async {
-    final db = ref.read(databaseNotifierProvider).database;
-    if (db != null) {
-      final dbItems = await (db.select(
-        db.databaseItemEntry,
-      )..where((tbl) => tbl.diaryEntryId.equals(diaryEntryId))).get();
-      state = dbItems.map(ItemEntry.fromData).toList();
-    }
-  }
-
   /// Adds a new item
   Future<void> addItem(ItemEntry item) async {
     final db = ref.read(databaseNotifierProvider).database;
