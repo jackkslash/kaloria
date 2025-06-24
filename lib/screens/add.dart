@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kaloria/controller/date_controller.dart';
 import 'package:kaloria/controller/diary_controller.dart';
 import 'package:kaloria/controller/item_controller.dart';
+import 'package:kaloria/controller/navbar_controller.dart';
 import 'package:kaloria/models/item.dart';
 
 class AddPage extends ConsumerStatefulWidget {
@@ -22,13 +26,7 @@ class _AddPageState extends ConsumerState<AddPage> {
     final selectedDate = ref.watch(selectedDateProvider);
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 225, 225, 225),
-      appBar: AppBar(
-        title: const Text('Add Item'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-      ),
+      backgroundColor: const Color(0xFFF0F2F5),
       body: FutureBuilder<Map<String, dynamic>?>(
         future: ref
             .read(diaryEntriesNotifierProvider.notifier)
@@ -39,121 +37,142 @@ class _AddPageState extends ConsumerState<AddPage> {
           }
           final diaryEntry = snapshot.data?['diaryEntry'];
           if (diaryEntry == null) {
-            return const Center(child: Text('No diary entry for this date.'));
+            return const Center(
+              child: Text(
+                'No diary entry for this date.',
+                style: TextStyle(color: Colors.grey),
+              ),
+            );
           }
-          return SingleChildScrollView(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 32, bottom: 8),
-                child: FractionallySizedBox(
-                  widthFactor: 0.96,
-                  child: Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 255, 255, 255),
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Add Item',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Name',
-                              border: OutlineInputBorder(),
-                            ),
-                            onSaved: (val) => _name = val ?? '',
-                            validator: (val) => val == null || val.isEmpty
-                                ? 'Enter a name'
-                                : null,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            decoration: const InputDecoration(
-                              labelText: 'Calories',
-                              border: OutlineInputBorder(),
-                            ),
-                            keyboardType: TextInputType.number,
-                            onSaved: (val) =>
-                                _calories = double.tryParse(val ?? '') ?? 0,
-                            validator: (val) =>
-                                val == null || double.tryParse(val) == null
-                                ? 'Enter calories'
-                                : null,
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(
-                                  255,
-                                  99,
-                                  99,
-                                  99,
-                                ),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                              ),
-                              onPressed: () async {
-                                if (_formKey.currentState?.validate() ??
-                                    false) {
-                                  _formKey.currentState?.save();
-                                  final item = ItemEntry(
-                                    id: 0,
-                                    diaryEntryId: diaryEntry.id,
-                                    name: _name,
-                                    calories: _calories,
-                                    createdAt: DateTime.now(),
-                                  );
-                                  await ref
-                                      .read(
-                                        itemEntriesNotifierProvider.notifier,
-                                      )
-                                      .addItem(item);
-                                  _formKey.currentState?.reset();
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Item added!'),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              child: const Text(
-                                'Add Item',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+          return _buildAddItemForm(diaryEntry);
+        },
+      ),
+    );
+  }
+
+  Widget _buildAddItemForm(dynamic diaryEntry) {
+    return SingleChildScrollView(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16.0,
+            vertical: 128.0,
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withValues(alpha: 0.2),
+                  spreadRadius: 2,
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
+              ],
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 24),
+                  _buildTextFormField(
+                    labelText: 'Name',
+                    onSaved: (val) => _name = val ?? '',
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Enter a name' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  _buildTextFormField(
+                    labelText: 'Calories',
+                    keyboardType: TextInputType.number,
+                    onSaved: (val) =>
+                        _calories = double.tryParse(val ?? '') ?? 0,
+                    validator: (val) =>
+                        val == null || double.tryParse(val) == null
+                        ? 'Enter calories'
+                        : null,
+                  ),
+                  const SizedBox(height: 32),
+                  _buildSubmitButton(diaryEntry),
+                ],
               ),
             ),
-          );
-        },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextFormField({
+    required String labelText,
+    TextInputType? keyboardType,
+    required FormFieldSetter<String> onSaved,
+    required FormFieldValidator<String> validator,
+  }) {
+    return TextFormField(
+      cursorColor: Colors.black87,
+      decoration: InputDecoration(
+        labelText: labelText,
+        labelStyle: const TextStyle(color: Colors.black87),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: Colors.black87, width: 2.0),
+        ),
+      ),
+      keyboardType: keyboardType,
+      onSaved: onSaved,
+      validator: validator,
+    );
+  }
+
+  Widget _buildSubmitButton(dynamic diaryEntry) {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.black87,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      onPressed: () async {
+        if (!(_formKey.currentState?.validate() ?? false)) {
+          return;
+        }
+        _formKey.currentState?.save();
+        final item = ItemEntry(
+          id: 0,
+          diaryEntryId: diaryEntry.id,
+          name: _name,
+          calories: _calories,
+          createdAt: DateTime.now(),
+        );
+
+        await ref.read(itemEntriesNotifierProvider.notifier).addItem(item);
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Item added!'),
+            duration: Duration(seconds: 1),
+          ),
+        );
+        ref.read(navBarProvider.notifier).collapseAll();
+
+        await Future.delayed(const Duration(seconds: 1));
+
+        if (!mounted) return;
+
+        context.go('/home');
+      },
+      child: const Text(
+        'Add Item',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
     );
   }

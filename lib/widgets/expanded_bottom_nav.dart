@@ -244,7 +244,9 @@ class _ExpandableBottomNavState extends ConsumerState<ExpandableBottomNav> {
             : Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
       ),
-      child: const Icon(Icons.add, color: Colors.black),
+      child: state.expanded == ExpandedSection.add
+          ? const Text('Back', style: TextStyle(color: Colors.black))
+          : const Icon(Icons.add, color: Colors.black),
     );
   }
 
