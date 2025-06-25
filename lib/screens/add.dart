@@ -10,7 +10,8 @@ import 'package:kaloria/controller/navbar_controller.dart';
 import 'package:kaloria/models/item.dart';
 
 class AddPage extends ConsumerStatefulWidget {
-  const AddPage({super.key});
+  final ItemEntry? item;
+  const AddPage({super.key, this.item});
 
   @override
   ConsumerState<AddPage> createState() => _AddPageState();
@@ -20,6 +21,15 @@ class _AddPageState extends ConsumerState<AddPage> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
   double _calories = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.item != null) {
+      _name = widget.item!.name;
+      _calories = widget.item!.calories;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +90,7 @@ class _AddPageState extends ConsumerState<AddPage> {
                   const SizedBox(height: 24),
                   _buildTextFormField(
                     labelText: 'Name',
+                    initialValue: _name,
                     onSaved: (val) => _name = val ?? '',
                     validator: (val) =>
                         val == null || val.isEmpty ? 'Enter a name' : null,
@@ -87,6 +98,7 @@ class _AddPageState extends ConsumerState<AddPage> {
                   const SizedBox(height: 16),
                   _buildTextFormField(
                     labelText: 'Calories',
+                    initialValue: _calories.toString(),
                     keyboardType: TextInputType.number,
                     onSaved: (val) =>
                         _calories = double.tryParse(val ?? '') ?? 0,
@@ -97,6 +109,11 @@ class _AddPageState extends ConsumerState<AddPage> {
                   ),
                   const SizedBox(height: 32),
                   _buildSubmitButton(diaryEntry),
+                  if (widget.item != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: _buildDeleteButton(),
+                    ),
                 ],
               ),
             ),
@@ -108,11 +125,13 @@ class _AddPageState extends ConsumerState<AddPage> {
 
   Widget _buildTextFormField({
     required String labelText,
+    String? initialValue,
     TextInputType? keyboardType,
     required FormFieldSetter<String> onSaved,
     required FormFieldValidator<String> validator,
   }) {
     return TextFormField(
+      initialValue: initialValue,
       cursorColor: Colors.black87,
       decoration: InputDecoration(
         labelText: labelText,
@@ -145,21 +164,63 @@ class _AddPageState extends ConsumerState<AddPage> {
         }
         _formKey.currentState?.save();
         final item = ItemEntry(
-          id: 0,
+          id: widget.item?.id ?? 0,
           diaryEntryId: diaryEntry.id,
           name: _name,
           calories: _calories,
-          createdAt: DateTime.now(),
+          createdAt: widget.item?.createdAt ?? DateTime.now(),
         );
 
-        await ref.read(itemEntriesNotifierProvider.notifier).addItem(item);
+        if (widget.item == null) {
+          await ref.read(itemEntriesNotifierProvider.notifier).addItem(item);
+        } else {
+          await ref.read(itemEntriesNotifierProvider.notifier).updateItem(item);
+        }
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              widget.item == null ? 'Item added!' : 'Item updated!',
+            ),
+            duration: const Duration(seconds: 1),
+          ),
+        );
+        ref.read(navBarProvider.notifier).collapseAll();
+
+        if (!mounted) return;
+
+        context.go('/home');
+      },
+      child: Text(
+        widget.item == null ? 'Add Item' : 'Update Item',
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+    );
+  }
+
+  Widget _buildDeleteButton() {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.red,
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+      ),
+      onPressed: () async {
+        await ref
+            .read(itemEntriesNotifierProvider.notifier)
+            .deleteItem(widget.item!.id);
 
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Item added!'),
-            duration: Duration(seconds: 1),
+            content: Text('Item deleted!'),
+            duration: const Duration(seconds: 1),
           ),
         );
         ref.read(navBarProvider.notifier).collapseAll();
@@ -171,7 +232,7 @@ class _AddPageState extends ConsumerState<AddPage> {
         context.go('/home');
       },
       child: const Text(
-        'Add Item',
+        'Delete Item',
         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
     );

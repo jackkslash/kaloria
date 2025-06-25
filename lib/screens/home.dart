@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:kaloria/controller/date_controller.dart';
 import 'package:kaloria/controller/navbar_controller.dart';
 import 'package:kaloria/screens/widgets/progress_indicator.dart';
@@ -24,33 +25,28 @@ class HomePage extends ConsumerWidget {
         backgroundColor: const Color.fromARGB(255, 225, 225, 225),
         body: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.only(top: 32, bottom: 8),
+            padding: const EdgeInsets.only(top: 56, bottom: 8),
             child: Center(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.start,
-                spacing: 20,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    spacing: 50,
+                    spacing: 20,
                     children: [
-                      ProgressCircle(
+                      const ProgressCircle(
                         currentValue: 0.5,
                         targetValue: 1,
                         size: 60,
-                        fillColor: const Color.fromARGB(255, 99, 99, 99),
-                        backgroundColor: const Color.fromARGB(
-                          255,
-                          255,
-                          255,
-                          255,
-                        ),
+                        fillColor: Color.fromARGB(255, 99, 99, 99),
+                        backgroundColor: Color.fromARGB(255, 255, 255, 255),
                         strokeWidth: 20.0,
                       ),
+                      const SizedBox(width: 20),
                       Column(
                         children: [
-                          Text(
+                          const Text(
                             '1,750',
                             style: TextStyle(
                               fontSize: 42,
@@ -59,7 +55,7 @@ class HomePage extends ConsumerWidget {
                           ),
                           Text(
                             ' remaning on ${formatDateManual(selectedDate)}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -68,6 +64,7 @@ class HomePage extends ConsumerWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 20),
                   FutureBuilder<Map<String, dynamic>?>(
                     future: diaryNotifier.getDiaryEntryWithItemsForDate(
                       selectedDate,
@@ -85,7 +82,7 @@ class HomePage extends ConsumerWidget {
                         child: FractionallySizedBox(
                           widthFactor: 0.96,
                           child: Container(
-                            padding: EdgeInsets.all(32),
+                            padding: const EdgeInsets.all(32),
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 255, 255, 255),
                               borderRadius: BorderRadius.circular(60),
@@ -95,7 +92,7 @@ class HomePage extends ConsumerWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Items for this date',
                                     style: TextStyle(
                                       fontSize: 18,
@@ -103,29 +100,37 @@ class HomePage extends ConsumerWidget {
                                       color: Colors.black,
                                     ),
                                   ),
-                                  SizedBox(height: 12),
+                                  const SizedBox(height: 12),
                                   ...items.map((item) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            item.name,
-                                            style: TextStyle(
-                                              color: Colors.black,
+                                    return InkWell(
+                                      onTap: () {
+                                        ref
+                                            .read(navBarProvider.notifier)
+                                            .expandAdd();
+                                        context.go('/add', extra: item);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 8.0,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              item.name,
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                              ),
                                             ),
-                                          ),
-                                          Text(
-                                            '${item.calories.toStringAsFixed(0)} cal',
-                                            style: TextStyle(
-                                              color: Colors.black,
+                                            Text(
+                                              '${item.calories.toStringAsFixed(0)} cal',
+                                              style: const TextStyle(
+                                                color: Colors.black,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     );
                                   }),
